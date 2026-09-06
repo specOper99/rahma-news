@@ -49,6 +49,10 @@ Admin chrome is English. Article fields are per-edition.
 - `pnpm test` — Vitest
 - `pnpm test:e2e` — Playwright
 
+## Deployment
+
+Production deploy to a server with existing PostgreSQL: [DEPLOYMENT.md](DEPLOYMENT.md).
+
 ## Architecture
 
 Next.js 16 App Router, next-intl (`src/proxy.ts`), Postgres + Drizzle, Better Auth (`disableSignUp: true`), TipTap in the CMS. Design tokens: [DESIGN.md](DESIGN.md).
