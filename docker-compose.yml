@@ -1,0 +1,19 @@
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: rahma
+      POSTGRES_PASSWORD: rahma
+      POSTGRES_DB: rahma
+    ports:
+      - "5432:5432"
+    volumes:
+      - rahma_pg:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U rahma"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  rahma_pg:
