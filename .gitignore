@@ -12,6 +12,14 @@
 
 # testing
 /coverage
+/test-results/
+/playwright-report/
+/blob-report/
+/playwright/.cache/
+
+# editor / IDE
+/.cursor/
+/.vscode/
 
 # next.js
 /.next/
@@ -32,6 +40,13 @@ yarn-error.log*
 
 # env files (can opt-in for committing if needed)
 .env*
+!.env.example
+
+# uploads
+/public/uploads/*
+!/public/uploads/.gitkeep
+/storage/uploads/*
+!/storage/uploads/.gitkeep
 
 # vercel
 .vercel
