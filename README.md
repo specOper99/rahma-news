@@ -1,36 +1,54 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Herald
 
-## Getting Started
+Multilingual newsroom: English, Arabic, and Central Kurdish (Sorani). Public site is SSR. Staff CMS at `/admin` uses email and password. There is no public signup and no OAuth.
 
-First, run the development server:
+## Languages
+
+- `en` — LTR
+- `ar` — RTL
+- `ckb` — Central Kurdish / Sorani, Arabic script, RTL
+
+A story can exist in one, two, or three editions. Publish state is per edition.
+
+## SEO note
+
+App locale and `html[lang]` for Kurdish is `ckb`. Google `hreflang` emits `ku-Arab` (ISO 639-1 `ku` + Arabic script), never `hreflang="ckb"`. `x-default` points at `/ar`.
+
+## Requirements
+
+- Node 20+
+- pnpm
+- Docker (Postgres 16)
+
+## Setup
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
+docker compose up -d
+cp .env.example .env
+pnpm i
+pnpm db:migrate
+pnpm seed
 pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open http://localhost:3000 (redirects to a locale). Admin: http://localhost:3000/admin/login
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+Credentials are in `.env` (`ADMIN_EMAIL` / `ADMIN_PASSWORD`). Defaults for local:
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+- owner@rahma.local / RahmaOwner10
+- editor@rahma.local / RahmaEditor10
+- author@rahma.local / RahmaAuthor10
 
-## Learn More
+Admin chrome is English. Article fields are per-edition.
 
-To learn more about Next.js, take a look at the following resources:
+## Scripts
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+- `pnpm dev` — Next.js
+- `pnpm db:push` / `pnpm db:generate` / `pnpm db:migrate`
+- `pnpm seed` — demo newsroom (refused in production unless `ALLOW_SEED=1`)
+- `pnpm test` — Vitest
+- `pnpm test:e2e` — Playwright
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Architecture
 
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Next.js 16 App Router, next-intl (`src/proxy.ts`), Postgres + Drizzle, Better Auth (`disableSignUp: true`), TipTap in the CMS. Design tokens: [DESIGN.md](DESIGN.md).
