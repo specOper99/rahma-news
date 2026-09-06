@@ -182,21 +182,56 @@ After enabling HTTPS, set both `BETTER_AUTH_URL` and `NEXT_PUBLIC_SITE_URL` to `
 
 ## systemd service
 
+Run the service as **the same Linux user that owns the repo** — e.g. your login (`specOper99`), not a fictional `herald` user unless you created one.
+
+Exit codes:
+
+| Code | Meaning |
+|------|---------|
+| **217/USER** | `User=` in the unit does not exist on the server |
+| **203/EXEC** | `ExecStart` path wrong — often `/usr/bin/pnpm` when pnpm lives elsewhere; use `node …/next start` instead |
+
+### 1. Paths (run as your user)
+
+```bash
+whoami                    # e.g. specOper99
+pwd                       # repo root, e.g. /home/specOper99/herald
+which node                # full path — required for ExecStart
+test -f .next/BUILD_ID && echo "built" || echo "run: pnpm build"
+```
+
+If `which node` prints nothing, install Node 20+ or load nvm in your shell and note the path under `~/.nvm/`.
+
+### 2. Optional dedicated user
+
+Only if you want a separate system account:
+
+```bash
+sudo useradd --system --home /var/www/herald --shell /usr/sbin/nologin herald
+sudo chown -R herald:herald /var/www/herald
+```
+
+Otherwise skip this and set `User=` / `Group=` to your username.
+
+### 3. Unit file
+
+Replace `specOper99`, `/home/specOper99/herald`, and the `node` path with your values.
+
 `/etc/systemd/system/herald.service`:
 
 ```ini
 [Unit]
 Description=Herald news site
-After=network.target postgresql.service
+After=network.target
 
 [Service]
 Type=simple
-User=herald
-Group=herald
-WorkingDirectory=/var/www/herald
+User=specOper99
+Group=specOper99
+WorkingDirectory=/home/specOper99/herald
 Environment=NODE_ENV=production
-EnvironmentFile=/var/www/herald/.env
-ExecStart=/usr/bin/pnpm start
+EnvironmentFile=/home/specOper99/herald/.env
+ExecStart=/usr/bin/node node_modules/next/dist/bin/next start
 Restart=on-failure
 RestartSec=5
 
@@ -204,13 +239,20 @@ RestartSec=5
 WantedBy=multi-user.target
 ```
 
+Do **not** use `ExecStart=/usr/bin/pnpm start` — pnpm is often missing from systemd's PATH. Use the output of `which node`.
+
+**nvm:** if node is e.g. `/home/specOper99/.nvm/versions/node/v20.18.0/bin/node`, put that full path in `ExecStart`.
+
+Ensure `.env` is readable by your user (`chmod 600 .env`). Build as that user: `pnpm build`.
+
+### 4. Enable
+
 ```bash
 sudo systemctl daemon-reload
 sudo systemctl enable --now herald
 sudo systemctl status herald
+journalctl -u herald -n 30 --no-pager
 ```
-
-Install pnpm globally for the `herald` user, or set `ExecStart` to the absolute path of `node node_modules/next/dist/bin/next start`.
 
 ## Scheduled publishing (cron)
 
@@ -247,6 +289,8 @@ Do not run `pnpm seed` on production unless you intend to refresh demo data.
 
 | Symptom | Likely cause |
 |---------|----------------|
+| `status=217/USER` on start | `User=herald` (or other) account missing — `id herald` or create user / change `User=` |
+| Service exits immediately after fixing user | Wrong `node` path, missing `pnpm build`, or `.env` not readable by service user |
 | Admin login succeeds then immediately logs out | `BETTER_AUTH_URL` / `NEXT_PUBLIC_SITE_URL` do not match the browser URL or scheme |
 | `DATABASE_URL is required` on start | `.env` missing or not loaded by systemd (`EnvironmentFile=`) |
 | Migration fails on enum/table already exists | Database was partially migrated or shared with another Herald install — use a fresh database or inspect `drizzle.__drizzle_migrations` |
